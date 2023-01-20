@@ -1,4 +1,4 @@
-class GraphicCommandInterface_SP extends GraphicCommandInterfaceMod
+class GraphicCommandInterface_SP extends GraphicCommandInterface
     config(PlayerInterface_Command_SP);
 
 defaultproperties

@@ -10,7 +10,7 @@ import enum EquipmentSlot from Engine.HandheldEquipment;
 import enum SpeechRecognitionConfidence from Engine.SpeechManager;
 import enum eVoiceType from SwatGame.SwatGUIConfig;
 
-//Ideally these should be protected, and GUIGraphicCommandInterface should be a friend of CommandInterfaceMod.
+//Ideally these should be protected, and GUIGraphicCommandInterface should be a friend of CommandInterface.
 //Since UnrealScript doesn't support friend classes, these need to be public.
 var SwatAICommon.OfficerTeamInfo            Element;
 var SwatAICommon.OfficerTeamInfo            RedTeam;
@@ -18,11 +18,11 @@ var SwatAICommon.OfficerTeamInfo            BlueTeam;
 //
 var SwatAICommon.OfficerTeamInfo            CurrentCommandTeam;    //the officer team to which commands are currently being directed
 
-var class<CommandInterfaceContextsList>     ContextsListClass;              //the class that is used to contain the list of contexts for this CommandInterfaceMod
-                                                                            //this is used to support independent CommandInterfaceMod configuration in SP vs. MP
+var class<CommandInterfaceContextsList>     ContextsListClass;              //the class that is used to contain the list of contexts for this CommandInterface
+                                                                            //this is used to support independent CommandInterface configuration in SP vs. MP
 
 var class<CommandInterfaceMenuInfo>         MenuInfoClass;                  //the class to instantiate for each entry in the MenuInfo array
-                                                                            //this is used to support independent CommandInterfaceMod configuration in SP vs. MP
+                                                                            //this is used to support independent CommandInterface configuration in SP vs. MP
 var array<CommandInterfaceMenuInfo>         MenuInfo;                       //information about each of the menus as a whole, eg. AnchorCommand
 
 //StaticCommands
@@ -41,19 +41,20 @@ var array<CommandInterfaceMenuInfo>         MenuInfo;                       //in
 //  - Commands have a unique ECommand value iff there is unique code associated with the command.
 //  - Commands are set to bStatic=true iff they are always available, and so they never need to be evaluated for availability.
 //
-var config class<CommandInterfaceStaticCommands> StaticCommandsClass;       //the class that is used to contain the list of static commands for this CommandInterfaceMod
-                                                                            //this is used to support independent CommandInterfaceMod configuration in SP vs. MP
+var config class<CommandInterfaceStaticCommands> StaticCommandsClass;       //the class that is used to contain the list of static commands for this CommandInterface
+                                                                            //this is used to support independent CommandInterface configuration in SP vs. MP
 var array<name>                             StaticCommands;                 //a list of "static" commands, configured in CommandInterfaceStaticCommands subclasses for SP and for MP
 
 var class<Command>                          CommandClass;                   //the class to be instantiated for each defined command
-var array<Command>                          Commands;                       //all Commands recognized by the CommandInterfaceMod
+var array<Command>                          Commands;                       //all Commands recognized by the CommandInterface
 
-var bool                                    Enabled;                        //whether this CommandInterfaceMod is able to handle requests to give commands now
-var bool                                    DefaultCommandEnabled;          //whether this CommandInterfaceMod is able to handle requests to give default commands now
+var bool                                    Enabled;                        //whether this CommandInterface is able to handle requests to give commands now
+var bool                                    DefaultCommandEnabled;          //whether this CommandInterface is able to handle requests to give default commands now
 
 enum CommandInterfacePage
 {
     Page_None,
+
     Page_Command,
     Page_Deploy,
     //MP-only
@@ -66,7 +67,7 @@ var protected CommandInterfacePage          CurrentPage;                    //wh
                                                                             //PLEASE only access thru Set/GetCurrentPage
 var protected CommandInterfacePage          CurrentMainPage;                //which page of the command interface is currently the main page
 
-//each command's MenuPadStatus is updated when the CommandInterfaceMod is updated.
+//each command's MenuPadStatus is updated when the CommandInterface is updated.
 //the MenuPadStatus represents the status/availability of a particular command:
 enum MenuPadStatus
 {
@@ -75,25 +76,25 @@ enum MenuPadStatus
     Pad_Disabled        //the command doesn't make logical sense in the current context
 };
 
-var protected Command                         DefaultCommand;                 //the current DefaultCommand, which is automatically set based on what the player is looking at.  this command is given if the player presses the default command key.
-var protected int                             DefaultPriority;                //The priority of the current DefaultCommand.  Used to permit default commands to be overridden by other commands with more specific contexts.
-var protected Command                         CurrentOverrideDefaultCommand;  //if the CurrentPage specifies an OverrideDefaultCommand, then this is set to that command
+var private Command                         DefaultCommand;                 //the current DefaultCommand, which is automatically set based on what the player is looking at.  this command is given if the player presses the default command key.
+var private int                             DefaultPriority;                //The priority of the current DefaultCommand.  Used to permit default commands to be overridden by other commands with more specific contexts.
+var private Command                         CurrentOverrideDefaultCommand;  //if the CurrentPage specifies an OverrideDefaultCommand, then this is set to that command
 var protected GUIDefaultCommandIndicator    DefaultCommandControl;          //the GUI control that displays the current DefaultCommand
 var protected GUILabel                      CurrentMainPageControl;         //the GUI control that displays the CurrentMainPage
 
-var protected bool                            Selected;                       //true if this CommandInterfaceMod is the local player's currently selected command interface
+var private bool                            Selected;                       //true if this CommandInterface is the local player's currently selected command interface
 
 //the PendingCommand variables are used to hold information about a command that has been given, but
 //  has not yet finished being spoken.  these variables are used to send the command to the officers
 //  once the speech has finished.
-var  Command                         PendingCommand;
-var  vector                          PendingCommandOrigin;           //the location of the player's camera at the time that the command was given, ie. started
-var  SwatAICommon.OfficerTeamInfo    PendingCommandTeam;             //the officer team to which the command was directed
-var  array<Focus>                    PendingCommandFoci;             //the CommandInterfaceMod's list of Foci (see PlayerFocusInterface.uc) at the time that the command was given
-var  int                             PendingCommandFociLength;       //the length of Foci (see PlayerFocusInterface.uc) at the time that the command was given
-var  SwatAICharacter                 PendingCommandTargetCharacter;  //the AI character to which the PendingCommand refers
+var private Command                         PendingCommand;
+var private vector                          PendingCommandOrigin;           //the location of the player's camera at the time that the command was given, ie. started
+var private SwatAICommon.OfficerTeamInfo    PendingCommandTeam;             //the officer team to which the command was directed
+var private array<Focus>                    PendingCommandFoci;             //the CommandInterface's list of Foci (see PlayerFocusInterface.uc) at the time that the command was given
+var private int                             PendingCommandFociLength;       //the length of Foci (see PlayerFocusInterface.uc) at the time that the command was given
+var private SwatAICharacter                 PendingCommandTargetCharacter;  //the AI character to which the PendingCommand refers
 
-//in Training, the CommandInterfaceMod is used in a "mode" where the player is expected to give
+//in Training, the CommandInterface is used in a "mode" where the player is expected to give
 //  a specific command, possibly to a specific team, and/or at a specific Door.
 //if there is an ExpectedCommand, then other commands will be ignored.
 var name                                    ExpectedCommand;                //the command that the player is expected to give, if any
@@ -101,14 +102,14 @@ var name                                    ExpectedCommandTeam;            //th
 var name                                    ExpectedCommandTargetDoor;      //the door to which the player is expected to refer, if any
 var name                                    ExpectedCommandSource;          //the source viewport from which the command should be given, if any
 
-var protected SwatDoor                        CurrentDoorFocus;               //while updating the CommandInterfaceMod, the Door that is currently being considered
+var private SwatDoor                        CurrentDoorFocus;               //while updating the CommandInterface, the Door that is currently being considered
 
-var protected SwatAICommon.OfficerTeamInfo    LastCommandTeam;                //the last team to which a command was given
-var protected bool                            CommandSpeechInitialized;       //used to detect and manage the initiation and interruption of command speech
+var private SwatAICommon.OfficerTeamInfo    LastCommandTeam;                //the last team to which a command was given
+var private bool                            CommandSpeechInitialized;       //used to detect and manage the initiation and interruption of command speech
 
 var config bool                             DebugTerminalLocation;          //if true, then when a command is given, a debug box will be drawn in the world at the location that is considered the target of the command
 
-var vector                                  LastFocusUpdateOrigin;          //the origin (start) of the trace the last time that the CommandInterfaceMod was updated
+var vector                                  LastFocusUpdateOrigin;          //the origin (start) of the trace the last time that the CommandInterface was updated
 
 var String                                  GaveCommandString;              //the string used for concatenating MP command client messages, eg. "tektor: Fall In"
 
@@ -187,7 +188,6 @@ enum ECommand
     Command_Static
 };
 
-
 simulated function PreBeginPlay()
 {
     local int i;
@@ -203,7 +203,7 @@ simulated function PreBeginPlay()
     //Other PlayerFocusInterfaces have their "Context" and "DoorRelatedContext" lists
     //  automatically filled from their config file.
     //CommandInterfaces can't use this technique, because different subclasses use
-    //  different config files, to support independent CommandInterfaceMod configuration
+    //  different config files, to support independent CommandInterface configuration
     //  between SP and MP games.
     //So instead, CommandInterfaces use CommandInterfaceContextsLists, and copy the
     //  contexts configured in those classes into the CommandInterfaces context lists.
@@ -217,7 +217,7 @@ simulated function PreBeginPlay()
     for (i=0; i<ContextsList.DoorRelatedContext.length; ++i)
         DoorRelatedContext[i] = ContextsList.DoorRelatedContext[i];
 
-    //Copy static commands from CommandInterfaceStaticCommands container into this CommandInterfaceMod
+    //Copy static commands from CommandInterfaceStaticCommands container into this CommandInterface
 
     StaticCommandsList = new(None) StaticCommandsClass;
     assert(StaticCommandsList != None);
@@ -231,10 +231,9 @@ simulated function PreBeginPlay()
         MenuInfo[i] = new(None, string(GetEnum(CommandInterfacePage, i))) MenuInfoClass;
         assert(MenuInfo[i] != None);
     }
-	log("COMMAND INTERFACE- PREBEGINPLAY");
 }
 
-//initialize the CommandInterfaceMod
+//initialize the CommandInterface
 simulated function PostBeginPlay()
 {
     local int i, j;
@@ -242,13 +241,12 @@ simulated function PostBeginPlay()
     local Command NewCommand;
 
     Super.PostBeginPlay();
-	log("COMMAND INTERFACE- POSTBEGINPLAY");
 
-    Label = 'CommandInterfaceMod';
+    Label = 'CommandInterface';
 
     assert(CommandClass != None);
 
-    //instantiate all of the commands that the CommandInterfaceMod recognizes
+    //instantiate all of the commands that the CommandInterface recognizes
     NumDynamicCommands = int(ECommand.EnumCount);
     for (i=0; i<int(ECommand.Command_Static); ++i)
         NewCommand = InstantiateCommand(i, GetEnum(ECommand, i), ECommand(i));
@@ -272,23 +270,21 @@ simulated function PostBeginPlay()
             //  iterating over all commands (the j loop).
             assertWithDescription(MenuInfo[i].OverrideDefaultCommandObject != None,
                 "[tcohen] The OverrideDefaultCommand "$MenuInfo[i].OverrideDefaultCommand
-                $" specified for the CommandInterfaceMod menu named "$MenuInfo[i].name
+                $" specified for the CommandInterface menu named "$MenuInfo[i].name
                 $" is not a valid command name.  Please fix this in CommandInterfaceMenus_MP/SP.ini");
         }
     }
 
-    if( Level.NetMode == NM_Standalone || true )
+    if( Level.NetMode == NM_Standalone )
     {
         //cache references to the officer teams
         Element = SwatAIRepository(Level.AIRepo).GetElementSquad();
         RedTeam = SwatAIRepository(Level.AIRepo).GetRedSquad();
         BlueTeam = SwatAIRepository(Level.AIRepo).GetBlueSquad();
     }
-	
+
     //initialize the current team to the element
     SetCurrentTeam(Element);
-	
-	
 
 #if IG_SPEECH_RECOGNITION
     Level.GetEngine().SpeechManager.RegisterRuleInterest(self, 'Team');
@@ -305,15 +301,13 @@ simulated function PostBeginPlay()
         //in Multiplayer, we dont need to (and cannot) wait for the GameStarted Game Event
         Initialize();
     }
-	//log("CommandInterfaceMod-POSTBEGINPLAY()-------ELEMENT: "$Element$" --- CCT: "$CurrentCommandTeam);
 }
-
 
 //set the type of focus interface, consistent through subclasses
 //  used to test if Contexts meets special conditions for this type of PlayerFocusInterface 
 simulated function SetFocusInterfaceType()
 {
-    FocusInterfaceType = 'CommandInterfaceMod';
+    FocusInterfaceType = 'CommandInterface';
 }
 
 simulated function Command InstantiateCommand(int Index, name InstanceName, ECommand Command)
@@ -379,8 +373,8 @@ simulated function ActivateStaticCommands()
     }
 }
 
-//updates Selected to reflect whether this CommandInterfaceMod is the local player's currently selected CommandInterfaceMod
-simulated function OnSelectedCommandInterfaceChanged(CommandInterfaceMod NewSelected)
+//updates Selected to reflect whether this CommandInterface is the local player's currently selected CommandInterface
+simulated function OnSelectedCommandInterfaceChanged(CommandInterface NewSelected)
 {
     Selected = (NewSelected == self);
     SetCurrentTeam(CurrentCommandTeam);
@@ -461,15 +455,15 @@ simulated function PostUpdate();
 //set the CurrentCommandTeam by OfficerTeamInfo, and permit subclasses to do something when the current team changes
 simulated overloaded final function SetCurrentTeam(SwatAICommon.OfficerTeamInfo NewTeam)
 {
-    //if (NewTeam != CurrentCommandTeam)
-    //{
+    if (NewTeam != CurrentCommandTeam)
+    {
         CurrentCommandTeam = NewTeam;
 
         if (DefaultCommandControl != None)
             DefaultCommandControl.OnCurrentTeamChanged(NewTeam);
 
         OnCurrentTeamChanged(NewTeam);
-    //}
+    }
 }
 simulated protected function OnCurrentTeamChanged(SwatAICommon.OfficerTeamInfo NewTeam);
 
@@ -550,10 +544,9 @@ simulated function NextTeam()
         SetCurrentTeam(Element);
     else
         assertWithDescription(false,
-            "[tcohen] CommandInterfaceMod::NextTeam() CurrentCommandTeam isn't Red, Blue, or Element.");
+            "[tcohen] CommandInterface::NextTeam() CurrentCommandTeam isn't Red, Blue, or Element.");
 
     CheckTeam();
-	log("CommandInterfaceMod-NEXTTEAM()--- CCT: "$CurrentCommandTeam);
 }
 
 simulated final function SetMainPage(CommandInterfacePage Page)
@@ -608,7 +601,6 @@ simulated final function NextMainPage()
 //checks if a team has no members, and if so, selects the appropriate team
 simulated function CheckTeam()
 {
-	
     local bool RedHasMembers, BlueHasMembers;
 
     if (!Element.HasActiveMembers())
@@ -625,7 +617,6 @@ simulated function CheckTeam()
         if (!BlueHasMembers)
             SetCurrentTeam(RedTeam);
     }
-	
 }
 
 //returns if the currently selected team has active members
@@ -634,7 +625,7 @@ simulated function bool CurrentTeamHasActiveMembers()
     return CurrentCommandTeam.HasActiveMembers();
 }
 
-//set this CommandInterfaceMod to not handle requests to give commands
+//set this CommandInterface to not handle requests to give commands
 simulated final function Deactivate()
 {
     Enabled = false;
@@ -764,7 +755,7 @@ native final function bool TeamCanExecuteCommand(Command Command, optional SwatD
 
 //begin the process of giving the specified command.
 //the specified command will be selected either from the ClassicCommandInterface,
-//  GraphicCommandInterfaceMod, or from the DefaultCommand.
+//  GraphicCommandInterface, or from the DefaultCommand.
 //this involves remembering the details of the command so that these details can
 //  be used when the command is finished being spoken and is sent to the officers.
 //this begins speaking the given command by either starting team speech or
@@ -829,11 +820,9 @@ simulated function GiveCommand(Command Command)
         $") to "$CurrentCommandTeam
         $".  Focus: "$GetPendingFocusString());
 
-	log("COMMAND INTERFACE-GiveCommand()---CURRENTCOMMANDTEAM: "$CurrentCommandTeam);
-
     if (Level.NetMode == NM_Standalone)
         GiveCommandSP();
-	else
+    else
         GiveCommandMP();
 }
 
@@ -867,27 +856,21 @@ simulated function GiveCommandMP()
     local Vector PendingCommandTargetLocation;
     local eVoiceType VoiceType;
     local string SourceID, TargetID;
-	local name CommandTeam;
-	local Pawn Player;
-	
-	CommandTeam = GetCurrentTeam();
-	Player = Level.GetLocalPlayerController().Pawn;
 
     PendingCommandTargetActor = GetPendingCommandTargetActor();
     //note that GetPendingCommandTargetActor() returns None if the PendingCommand
     //  isn't associated with any particular actor.
     if (PendingCommandTargetActor != None)
         PendingCommandTargetLocation = PendingCommandTargetActor.Location;
-    else 
-	{//no target actor
+    else    //no target actor
         PendingCommandTargetLocation = GetLastFocusLocation();  //the point where the command interface focus trace was blocked
-	}
-    if( NetPlayerMod(PlayerPawn) != None )
+    
+    if( NetPlayer(PlayerPawn) != None )
     {
-        if( NetPlayerMod(PlayerPawn).IsTheVIP() )
+        if( NetPlayer(PlayerPawn).IsTheVIP() )
             VoiceType = eVoiceType.VOICETYPE_VIP;
         else
-            VoiceType = NetPlayerMod(PlayerPawn).VoiceType;
+            VoiceType = NetPlayer(PlayerPawn).VoiceType;
     }
     SourceID = PlayerPawn.UniqueID();
     if( PendingCommandTargetActor != None )
@@ -906,10 +889,7 @@ simulated function GiveCommandMP()
             PendingCommandTargetActor,
             TargetID,
             PendingCommandTargetLocation, 
-            VoiceType,
-			CommandTeam,
-			PendingCommandTargetCharacter,
-			Player	);
+            VoiceType );
 
         //instant feedback on client who gives the command (the local player)
         ReceiveCommandMP(
@@ -946,7 +926,7 @@ simulated function ReceiveCommandMP(
     //Note!  This is a command received from (potentially) another client.
     //  The PendingCommand* variables can NOT be used here.
 
-    log("TMC CommandInterfaceMod::ReceiveCommandMP() received the command "$Commands[CommandIndex].name
+    log("TMC CommandInterface::ReceiveCommandMP() received the command "$Commands[CommandIndex].name
             $", Source="$Source
             $", TargetActor="$TargetActor
             $", TargetLocation="$TargetLocation
@@ -1003,12 +983,12 @@ simulated function ReceiveCommandMP(
 simulated function CancelGivingCommand();
 
 //whenever GotoState('SpeakingCommand') is called, the caller should immediately call ExplicitBeginState().
-//this would be just BeginState(), but it needs to happen even if the CommandInterfaceMod is already
+//this would be just BeginState(), but it needs to happen even if the CommandInterface is already
 //  in state 'SpeakingCommand'.
 function ExplicitBeginState()
 {
     assertWithDescription(false,
-        "[tcohen] CommandInterfaceMod::ExplicitBeginState() was called in the Global state.  This should only (and always) be called immediately after calling GotoState('SpeakingCommand').");
+        "[tcohen] CommandInterface::ExplicitBeginState() was called in the Global state.  This should only (and always) be called immediately after calling GotoState('SpeakingCommand').");
 }
 
 //when giving a command to a team that is not the most recent team to receive a command,
@@ -1035,7 +1015,7 @@ function StartCommand()
             'OrderedBlue', , , , , , , Self);  //pass Self as IEffectObserver
     else
         assertWithDescription(false,
-            "[tcohen] CommandInterfaceMod::SpeakTeam() PendingCommandTeam isn't Red, Blue, or Element.");
+            "[tcohen] CommandInterface::SpeakTeam() PendingCommandTeam isn't Red, Blue, or Element.");
 
     GotoState('SpeakingTeam');
 }
@@ -1104,7 +1084,6 @@ state SpeakingTeam extends Speaking
             GotoState('');
     }
 }
-/*
 
 //play the speech for a given command and wait for it to finish.
 //this also handles interrupting a previous command if another command is given before the first is finished being spoken.
@@ -1144,7 +1123,7 @@ state SpeakingCommand extends Speaking
     }
 
     //this functions as a BeginState(), but is explicitly called so that it
-    //  happens even if the CommandInterfaceMod is already in this state.
+    //  happens even if the CommandInterface is already in this state.
     function ExplicitBeginState()
     {
         local name EffectTag;
@@ -1183,12 +1162,11 @@ state SpeakingCommand extends Speaking
             Warn("[tcohen] Tried to start the speech for the pending command "$PendingCommand.name
                 $", but triggering the "$PendingCommand.EffectEvent
                 $" did not result in any sound starting.");
-            GotoState('');  //fail-safe (otherwise the CommandInterfaceMod would appear to be "hung")
+            GotoState('');  //fail-safe (otherwise the CommandInterface would appear to be "hung")
         }
     }
 }
 
-*/
 simulated function bool IsExpectedCommandSource(name CommandSource)
 {
     // RedTeam and BlueTeam are special aliases that match if the specific
@@ -1214,14 +1192,13 @@ simulated function SendCommandToOfficers()
 
     PendingCommandTargetActor = GetPendingCommandTargetActor();
 
-	
     if (Level.GetLocalPlayerController().Pawn == None)
     {
         log("[COMMAND INTERFACE] At Time "$Level.TimeSeconds
             $", ...          in SendCommandToOfficers(), Level.GetLocalPlayerController().Pawn is none");
         return;
     }
-	
+
     LastFocusSource = SwatGamePlayerController(Level.GetLocalPlayerController()).GetLastFocusSource();
 
     //check the given command against any current expected command - for Training mission
@@ -1270,13 +1247,6 @@ simulated function SendCommandToOfficers()
         return;
     }
     
-	
-	log(self$" PendingCommand "$PendingCommand$" PendingCommandTeam "$PendingCommandTeam);
-	log("Level.GetLocalPlayerController().Pawn "$Level.GetLocalPlayerController().Pawn);
-	log("PendingCommandOrigin "$PendingCommandOrigin);
-	log("PendingCommandTargetActor "$PendingCommandTargetActor);
-	log("GetLastFocusLocation() "$GetLastFocusLocation());
-	
     //
     // "THE BIG ASS SWITCH"
     //
@@ -1284,7 +1254,7 @@ simulated function SendCommandToOfficers()
     //
 
     assertWithDescription(PendingCommand != None,
-        "[tcohen] CommandInterfaceMod::SendCommandToOfficers() was called with PendingCommand=None");
+        "[tcohen] CommandInterface::SendCommandToOfficers() was called with PendingCommand=None");
 
     if (PendingCommandTargetActor != None)
         log("[COMMAND INTERFACE] At Time "$Level.TimeSeconds
@@ -1592,7 +1562,7 @@ simulated function SendCommandToOfficers()
 
         default:
             assertWithDescription(false,
-                "[tcohen] CommandInterfaceMod::SendCommandToOfficers() Unexpected command "$GetEnum(ECommand,PendingCommand.Command));
+                "[tcohen] CommandInterface::SendCommandToOfficers() Unexpected command "$GetEnum(ECommand,PendingCommand.Command));
             return;
     }
 
@@ -1611,10 +1581,9 @@ simulated function SendCommandToOfficers()
 //  ONLY IF the PendingCommand is associated with a target actor!
 //If the PendingCommand isn't associated with any particular Actor,
 //  then GetPendingCommandTargetActor() returns None.
-simulated protected function Actor GetPendingCommandTargetActor()
+simulated private function Actor GetPendingCommandTargetActor()
 {
     local Actor TemporaryActor;
-	log("PendingCommand.Command: "$PendingCommand.Command);
 
     Switch (PendingCommand.Command)
     {
@@ -1688,14 +1657,14 @@ simulated protected function Actor GetPendingCommandTargetActor()
             {
                 TemporaryActor = GetPendingFocusOfClass('DeployedWedge');
                 assertWithDescription(TemporaryActor != None,
-                    "[tcohen] CommandInterfaceMod::GetPendingCommandTargetActor() Gave Command_RemoveWedge,"
+                    "[tcohen] CommandInterface::GetPendingCommandTargetActor() Gave Command_RemoveWedge,"
                     $" but GetDoorFocus()=None,"
                     $" and GetPendingFocusOfClass('DeployedWedge') is also None.  What're we removing?");
 
                 TemporaryActor = DeployedWedgeBase(TemporaryActor).GetDoorDeployedOn();
 
                 assertWithDescription(TemporaryActor.IsA('SwatDoor'),
-                    "[tcohen] CommandInterfaceMod::GetPendingCommandTargetActor() Gave Command_RemoveWedge,"
+                    "[tcohen] CommandInterface::GetPendingCommandTargetActor() Gave Command_RemoveWedge,"
                     $" and DeployedWedge="$TemporaryActor
                     $", but DeployedWedge.GetDoorDeployedOn() returned None.  What Door is it deployed on?");
 
@@ -1735,7 +1704,7 @@ simulated function bool CheckForValidDoor(Command Command, Actor Door)
 
     ValidDoor = (Door != None && Door.IsA('Door'));
     assertWithDescription(ValidDoor,
-        "[tcohen] CommandInterfaceMod::CheckForValidDoor() Gave "$GetEnum(ECommand, Command.Command)
+        "[tcohen] CommandInterface::CheckForValidDoor() Gave "$GetEnum(ECommand, Command.Command)
         $" which requires a valid Door, but Door="$Door);
 
     return ValidDoor;
@@ -1748,7 +1717,7 @@ simulated function bool CheckForValidPawn(Command Command, Actor Pawn)
 
     ValidPawn = (Pawn != None && Pawn.IsA('Pawn'));
     assertWithDescription(ValidPawn,
-        "[tcohen] CommandInterfaceMod::CheckForValidPawn() Gave "$GetEnum(ECommand, Command.Command)
+        "[tcohen] CommandInterface::CheckForValidPawn() Gave "$GetEnum(ECommand, Command.Command)
         $" which requires a valid Pawn, but Pawn="$Pawn);
 
     return ValidPawn;

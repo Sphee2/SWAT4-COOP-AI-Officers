@@ -1138,9 +1138,9 @@ function float GetExternalDamageModifier( Actor Damager, Actor Victim )
 {
     //NetPlayers are damaged according to the appropriate server settings
     //  for enemy damage and team damage
-    if( NetPlayerMod(Damager) != none && NetPlayerMod(Victim) != None )
+    if( NetPlayer(Damager) != none && NetPlayer(Victim) != None )
     {
-        if( NetPlayerMod(Damager).GetTeamNumber() == NetPlayerMod(Victim).GetTeamNumber() )
+        if( NetPlayer(Damager).GetTeamNumber() == NetPlayer(Victim).GetTeamNumber() )
             return GetFriendlyFireModifier();
         else
             return GetEnemyFireModifier();

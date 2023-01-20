@@ -68,39 +68,16 @@ replication
         LoadOutSpecCount, SkinsCount,
         ReplicatedLoadOutSpec, ReplicatedSkins, bThisPlayerIsTheVIP, SwatPlayerID, VoiceType;
 
+    reliable if ( Role == ROLE_Authority )
+        OnDoorUnlocked;
     
     //dkaplan: remote pawns also need to know the ammo amount to avoid empty clip -need reload problems    
     //reliable if ( Role == ROLE_Authority && RemoteRole == ROLE_AutonomousProxy )
     reliable if ( Role == ROLE_Authority )
         CurrentWeaponPocket, CurrentAmmoCounts, CurrentClip;
 }
-/*	
-	reliable if ( Role < ROLE_Authority )
-		testFunctionServer;
-	reliable if ( Role == ROLE_Authority )
-		testFunctionClient;
-}
 
-function testFunctionServer()
-{
-	log(self$" called testFunctionServer");
-	log("SwatAIRepository(Level.AIRepo).GetElementSquad() "$SwatAIRepository(Level.AIRepo).GetElementSquad());
-	testFunctionClient(SwatAIRepository(Level.AIRepo).GetElementSquad());
-	
-}
 
-simulated function testFunctionClient(ElementSquadInfo asd)
-{
-	local ElementSquadInfo asd2;
-	
-	if(Role < ROLE_Authority)
-		asd2 = asd;
-		log(self$" called testFunctionClient");
-		log(asd);
-		log(asd2);
-	
-}
-*/
 simulated function String UniqueID()
 {
     return ("SwatNetPlayer"$SwatPlayerID);
@@ -114,7 +91,7 @@ function InitializeReplicatedCounts()
 
  	if (Level.GetEngine().EnableDevTools)
 	    mplog( self$"---NetPlayer::InitializeReplicatedCounts()." );
-	log( self$"---NetPlayer::InitializeReplicatedCounts()." );
+
     Assert( Level.NetMode != NM_Client );
     
     LoadOutSpecCount = 0;
@@ -148,7 +125,7 @@ simulated event PostNetBeginPlay()
 {
  	if (Level.GetEngine().EnableDevTools)
 	    mplog( self$"---NetPlayer::PostNetBeginPlay()." );
-	log( self$"---NetPlayer::PostNetBeginPlay()." );
+
     super.PostNetBeginPlay();
 
     if ( Level.NetMode == NM_Client )
@@ -196,7 +173,7 @@ simulated event PostReplication()
 
  	if (Level.GetEngine().EnableDevTools)
 	    mplog( self$"---NetPlayer::PostReplication()." );
-	log( self$"---NetPlayer::PostReplication()." );
+
     bLoadOutInitialized = true;
 
     Assert( Level.NetMode == NM_Client );
@@ -414,7 +391,7 @@ function StopMovingIntoBeingCuffedPosition()
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// A NetPlayer will always get OnArrestingBegan() before being arrested.
+// A netplayer will always get OnArrestingBegan() before being arrested.
 //
 simulated function OnArrestBegan(Pawn Arrester)
 {

@@ -2,7 +2,7 @@
 //
 // OfficerBlueTwo.uc - the OfficerBlueTwo class
 
-class OfficerBlueTwo extends SwatOfficerMod;
+class OfficerBlueTwo extends SwatOfficer;
 ///////////////////////////////////////////////////////////////////////////////
 
 function PreBeginPlay()
@@ -16,7 +16,7 @@ function PreBeginPlay()
 //
 // Initialization
 
-simulated protected function AddToSquads()
+protected function AddToSquads()
 {
 	local SwatAIRepository SwatAIRepo;
 	SwatAIRepo = SwatAIRepository(Level.AIRepo);
@@ -25,7 +25,7 @@ simulated protected function AddToSquads()
 	SwatAIRepo.GetElementSquad().addToSquad(self);
 }
 
-simulated protected function RemoveFromSquads()
+protected function RemoveFromSquads()
 {
 	local SwatAIRepository SwatAIRepo;
 	SwatAIRepo = SwatAIRepository(Level.AIRepo);
@@ -49,6 +49,4 @@ defaultproperties
 {
 	OfficerLoadOutType="OfficerBlueTwoLoadOut"
 	OfficerFriendlyName="Officer Blue Two"
-	    bNoRepMesh=false
-	bReplicateAnimations=true
 }

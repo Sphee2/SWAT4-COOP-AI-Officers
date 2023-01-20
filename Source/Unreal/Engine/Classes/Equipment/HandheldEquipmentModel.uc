@@ -1,6 +1,6 @@
 class HandheldEquipmentModel extends Actor
     implements IEvidence
-    dependsOn(Pawn)
+    dependson(Pawn)
     HideCategories(Advanced, Events, Force, LightColor, Lighting, Movement, Object, Sound)
     config(SwatGame)
     native

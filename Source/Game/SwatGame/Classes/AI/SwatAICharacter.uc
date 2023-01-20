@@ -109,8 +109,8 @@ simulated event PostBeginPlay()
     // * SERVER ONLY
     if ( Level.NetMode != NM_Client )
     {
-		CreateAwareness();
-	}
+    CreateAwareness();
+}
 }
 
 simulated event ReplicatedMeshInfoOnChanged()
@@ -396,7 +396,6 @@ protected function InitializePatrolling(PatrolList Patrol)
     }
 }
 
-
 ///////////////////////////////////////////////////////////////////////////////
 //
 // IUseArchetype interface implementation
@@ -416,7 +415,6 @@ function InitializeFromArchetypeInstance()
 	SetVoiceType(Instance);
 
     SwitchToMesh(Instance.Mesh);
-	
     ReplicatedMesh = Instance.Mesh;
 
     // Some hostages/enemies use the SWAT officer skeleton with different clothing and skin. 

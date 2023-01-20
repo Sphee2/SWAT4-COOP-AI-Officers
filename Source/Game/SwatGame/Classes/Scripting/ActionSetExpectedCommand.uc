@@ -7,14 +7,14 @@ var() name ExpectedCommandSource "The expected Label of the source giving the co
 
 latent function Variable execute()
 {
-    local CommandInterfaceMod CommandInterfaceMod;
+    local CommandInterface CommandInterface;
 
     if( parentScript.Level.NetMode != NM_Standalone )
         return None;
 
-    CommandInterfaceMod = SwatGamePlayerController(parentScript.Level.GetLocalPlayerController()).GetCommandInterface();
+    CommandInterface = SwatGamePlayerController(parentScript.Level.GetLocalPlayerController()).GetCommandInterface();
     
-    CommandInterfaceMod.SetExpectedCommand(
+    CommandInterface.SetExpectedCommand(
             ExpectedCommand,
             ExpectedCommandTeam,
             ExpectedCommandTargetDoor,
@@ -35,8 +35,8 @@ function editorDisplayString(out string s)
 
 defaultproperties
 {
-	actionDisplayName	= "Set the CommandInterfaceMod ExpectedCommand & ExpectedCommandTeam"
-	actionHelp			= "Sets the ExpectedCommand and ExpectedCommandTeam for the current CommandInterfaceMod.  The CommandInterfaceMod will only send the specified command to the specified team."
+	actionDisplayName	= "Set the CommandInterface ExpectedCommand & ExpectedCommandTeam"
+	actionHelp			= "Sets the ExpectedCommand and ExpectedCommandTeam for the current CommandInterface.  The CommandInterface will only send the specified command to the specified team."
 	returnType			= None
 	category			= "Script"
 }

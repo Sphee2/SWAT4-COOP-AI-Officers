@@ -400,7 +400,7 @@ function RespawnReinforcements( int TeamID )
     local Controller i, controller;
     local SwatGamePlayerController current, SGPC;
     local SwatGamePlayerController theLocalPlayerController;
-    local NetPlayerMod TheNetPlayer;
+    local NetPlayer TheNetPlayer;
     local int NumberOfRespawningPlayers;
 
  	if (Level.GetEngine().EnableDevTools)
@@ -432,10 +432,10 @@ function RespawnReinforcements( int TeamID )
     for (controller = level.controllerList; controller != none; controller = controller.nextController)
     {
         SGPC = SwatGamePlayerController(controller);
-        TheNetPlayer = NetPlayerMod(SGPC.SwatPlayer);
+        TheNetPlayer = NetPlayer(SGPC.SwatPlayer);
         //mplog( "" );
         //mplog( "...controller="$SGPC );
-        //mplog( "...NetPlayerMod="$TheNetPlayer );
+        //mplog( "...NetPlayer="$TheNetPlayer );
         //mplog( "...TeamID="$SGPC.SwatRepoPlayerItem.TeamID );
         //mplog( "...IsDead()="$SGPC.IsDead() );
         //mplog( "...IsCuffed()="$SGPC.IsCuffed() );
@@ -532,7 +532,7 @@ function OnPawnArrested( Pawn player, Pawn Arrester )
     swatVictimTeam.netScoreInfo.IncrementTimesArrested();
 
     // Increment arrester's stat
-    if ( NetPlayerMod(player).IsTheVIP() )
+    if ( NetPlayer(player).IsTheVIP() )
     {
         swatArresterInfo.netScoreInfo.IncrementArrestedVIP();
         swatArresterTeam.netScoreInfo.IncrementArrestedVIP();
@@ -811,10 +811,10 @@ protected function SetEndRoundTarget()
     local string TargetName;
     local bool TargetOnSWAT;
 
-    if( NetPlayerMod(InterestingViewTarget) != None )
+    if( NetPlayer(InterestingViewTarget) != None )
     {
         TargetName = InterestingViewTarget.GetHumanReadableName();
-        TargetOnSWAT = NetPlayerMod(InterestingViewTarget).GetTeamNumber() == 0;
+        TargetOnSWAT = NetPlayer(InterestingViewTarget).GetTeamNumber() == 0;
     }
         
  	if (Level.GetEngine().EnableDevTools)

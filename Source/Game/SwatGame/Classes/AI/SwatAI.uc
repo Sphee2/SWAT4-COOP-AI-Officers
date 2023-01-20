@@ -3073,6 +3073,5 @@ defaultproperties
 	PlayerBlockingPathStartTime = -1.0
 
 	bAlwaysTestPathReachability = false
-	
 }
 

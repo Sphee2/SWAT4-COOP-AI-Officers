@@ -26,7 +26,6 @@ event PostBeginPlay()
 	Super.PostBeginPlay();
 
 	InitAbilities();
-	log("officerteaminfo "$self$" PostBeginPlay--- SwatAIRepo: "$SwatAIRepo);
 }
 
 // add all of our abilities to the Squad Resource -- subclasses should call down the chain
@@ -315,19 +314,13 @@ private function bool AreOfficersBusyEngaging()
 private function TriggerBusyEngagingSpeech()
 {
 	local Pawn Officer;
-	local Pawn Player;
-	local Controller Iter;
 
 	// this function doesn't need to be networked because we don't have officers in coop
-	for(Iter = Level.ControllerList; Iter != None; Iter=Iter.NextController)
+	Officer = GetClosestOfficerTo(SwatAIRepo.Level.GetLocalPlayerController().Pawn);
+
+	if (Officer != None)
 	{
-		if (Iter.IsA('PlayerController'))
-		{
-			Player = Iter.Pawn;
-			Officer = GetClosestOfficerTo(Player);
-			if (Officer != None)
-				ISwatOfficer(Officer).GetOfficerSpeechManagerAction().TriggerBusyEngagingSpeech();
-		}
+		ISwatOfficer(Officer).GetOfficerSpeechManagerAction().TriggerBusyEngagingSpeech();
 	}
 }
 
@@ -619,24 +612,23 @@ function bool IsTeamInteractingWith(Actor TestActor)
 function FallIn(Pawn CommandGiver, vector CommandOrigin)
 {
 	local SquadFallInGoal SquadFallInGoal;
+
 	// only post the goal if we are allowed
 	if (CanExecuteCommand())
 	{
 		// if we're not a sub element, or if the other team is not falling in
-		if (!IsSubElement()  || !IsOtherSubElementFallingIn() || (GetOtherTeam().IsFallingIn() && GetOtherTeam().CurrentSquadCommandGoal.CommandGiver != CommandGiver))
+		if (!IsSubElement() || !IsOtherSubElementFallingIn())
 		{
 			SquadFallInGoal = new class'SquadFallInGoal'(AI_Resource(SquadAI), CommandGiver, CommandOrigin);
 			assert(SquadFallInGoal != None);
 
 			PostCommandGoal(SquadFallInGoal);
 		}
-		
 		else
 		{
 			// we want the whole team to fall in
 			SwatAIRepo.GetElementSquad().FallIn(CommandGiver, CommandOrigin);
 		}
-		
 	}
 }
 

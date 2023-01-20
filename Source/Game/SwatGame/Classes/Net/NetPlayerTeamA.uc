@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 
-class NetPlayerTeamA extends NetPlayerMod;
+class NetPlayerTeamA extends NetPlayer;
 
 
 simulated function PostBeginPlay()
